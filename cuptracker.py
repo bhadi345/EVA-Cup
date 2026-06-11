@@ -1,7 +1,7 @@
 import requests
 
-url = "https://fortnitetracker.com/events.ics?region=EU"
+url = "https://www.fortnite.com/competitive/?region=EU"
 
 r = requests.get(url)
 
-print(r.text[:500])
+print(r.text[:1000])
