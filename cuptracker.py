@@ -11,11 +11,28 @@ headers={
 
 r=requests.get(url,headers=headers)
 
+data=r.json()
+
+title=data["news"]["messages"][0]["title"]
+body=data["news"]["messages"][0]["body"]
+
+msg=f"""
+@everyone
+
+📰 EVA Fortnite Update
+
+🏆 {title}
+
+{body}
+
+💙 Mehr in #cups
+"""
+
 requests.post(
-    WEBHOOK,
-    json={
-        "content": f"🏆 TEST\n\nStatus: {r.status_code}\n\n{r.text[:500]}"
-    }
+WEBHOOK,
+json={
+"content":msg
+}
 )
 
-print(r.status_code)
+print("Gesendet")
