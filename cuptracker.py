@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 API_KEY="14eb41dafca37dc846edbcf65aa3678fbee1268ec4aa8956f58c8de83b5b3c66"
@@ -8,17 +8,17 @@ WEBHOOK="https://discord.com/api/webhooks/1514757021600055366/o67iC60ZiYFKETub2T
 url="https://prod.api-fortnite.com/api/v1/events/global"
 
 headers={
-    "x-api-key":API_KEY
+    "x-api-key": API_KEY
 }
 
 r=requests.get(url,headers=headers)
 
 events=r.json()
 
-msg="@everyone\n\n🏆 **Nächste EU Cups**\n\n"
+berlin=ZoneInfo("Europe/Berlin")
+now=datetime.now(timezone.utc)
 
-seen=set()
-count=0
+cups=[]
 
 for event in events:
 
@@ -29,37 +29,66 @@ for event in events:
 
     for cup in event["regions"]["EU"]:
 
-        start=cup["beginTime"]
+        try:
 
-        key=(name,start)
+            start=datetime.fromisoformat(
+                cup["beginTime"].replace(
+                    "Z",
+                    "+00:00"
+                )
+            )
 
-        if key in seen:
+            if start < now:
+                continue
+
+            cups.append({
+                "name":name,
+                "time":start
+            })
+
+        except:
             continue
 
-        seen.add(key)
 
-        dt=(
-            datetime
-            .fromisoformat(start.replace("Z","+00:00"))
-            .astimezone(
-                ZoneInfo("Europe/Berlin")
-            )
-        )
+cups=sorted(
+    cups,
+    key=lambda x:x["time"]
+)
 
-        zeit=dt.strftime("%d.%m • %H:%M")
+seen=set()
+final=[]
 
-        msg+=(
-            f"🎯 {name}\n"
-            f"🕒 {zeit} Uhr\n\n"
-        )
+for cup in cups:
 
-        count+=1
+    key=(
+        cup["name"],
+        cup["time"].strftime("%Y-%m-%d")
+    )
 
-        if count>=5:
-            break
+    if key in seen:
+        continue
 
-    if count>=5:
+    seen.add(key)
+    final.append(cup)
+
+    if len(final)>=5:
         break
+
+
+msg="@everyone\n\n🏆 **Nächste EU Cups**\n\n"
+
+for cup in final:
+
+    zeit=(
+        cup["time"]
+        .astimezone(berlin)
+        .strftime("%d.%m • %H:%M")
+    )
+
+    msg+=(
+        f"🎯 {cup['name']}\n"
+        f"🕒 {zeit} Uhr\n\n"
+    )
 
 msg+="📍 Region: EU\n💙 EVA Esports"
 
