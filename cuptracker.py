@@ -8,7 +8,7 @@ WEBHOOK="https://discord.com/api/webhooks/1514757021600055366/o67iC60ZiYFKETub2T
 url="https://prod.api-fortnite.com/api/v1/events/global"
 
 headers={
-    "x-api-key": API_KEY
+    "x-api-key":API_KEY
 }
 
 r=requests.get(url,headers=headers)
@@ -25,34 +25,41 @@ for event in events:
     if "EU" not in event.get("regions",{}):
         continue
 
-    name=event.get("titleLine1","Cup")
+    name=event.get(
+        "titleLine1",
+        "Cup"
+    )
 
     for cup in event["regions"]["EU"]:
 
         try:
 
             start=datetime.fromisoformat(
-                cup["beginTime"].replace(
-                    "Z",
-                    "+00:00"
-                )
+                cup["beginTime"]
+                .replace("Z","+00:00")
             )
 
-            if start < now:
+            end=datetime.fromisoformat(
+                cup["endTime"]
+                .replace("Z","+00:00")
+            )
+
+            if end < now:
                 continue
 
             cups.append({
                 "name":name,
-                "time":start
+                "start":start,
+                "end":end
             })
 
         except:
-            continue
+            pass
 
 
 cups=sorted(
     cups,
-    key=lambda x:x["time"]
+    key=lambda x:x["start"]
 )
 
 seen=set()
@@ -62,41 +69,54 @@ for cup in cups:
 
     key=(
         cup["name"],
-        cup["time"].strftime("%Y-%m-%d")
+        cup["start"]
     )
 
     if key in seen:
         continue
 
     seen.add(key)
+
     final.append(cup)
 
-    if len(final)>=5:
+    if len(final)>=6:
         break
 
 
-msg="@everyone\n\n🏆 **Nächste EU Cups**\n\n"
+msg="@everyone\n\n🏆 **Heute & Nächste EU Cups**\n\n"
 
 for cup in final:
 
-    zeit=(
-        cup["time"]
+    start=(
+        cup["start"]
         .astimezone(berlin)
-        .strftime("%d.%m • %H:%M")
+        .strftime("%H:%M")
+    )
+
+    end=(
+        cup["end"]
+        .astimezone(berlin)
+        .strftime("%H:%M")
+    )
+
+    tag=(
+        cup["start"]
+        .astimezone(berlin)
+        .strftime("%d.%m")
     )
 
     msg+=(
         f"🎯 {cup['name']}\n"
-        f"🕒 {zeit} Uhr\n\n"
+        f"🕒 {tag} • {start} - {end}\n\n"
     )
 
 msg+="📍 Region: EU\n💙 EVA Esports"
 
 requests.post(
-    WEBHOOK,
-    json={
-        "content":msg
-    }
+WEBHOOK,
+json={
+"content":msg
+}
 )
 
 print("Gesendet")
