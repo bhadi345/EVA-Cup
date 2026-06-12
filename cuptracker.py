@@ -8,10 +8,10 @@ WEBHOOK="https://discord.com/api/webhooks/1514757021600055366/o67iC60ZiYFKETub2T
 url="https://prod.api-fortnite.com/api/v1/events/global"
 
 headers={
-    "x-api-key":API_KEY
+    "x-api-key": API_KEY
 }
 
-r=requests.get(url,headers=headers)
+r=requests.get(url, headers=headers)
 
 events=r.json()
 
@@ -22,12 +22,12 @@ cups=[]
 
 for event in events:
 
-    if "EU" not in event.get("regions",{}):
+    if "EU" not in event.get("regions", {}):
         continue
 
     name=event.get(
         "titleLine1",
-        "Cup"
+        event.get("name","Cup")
     )
 
     for cup in event["regions"]["EU"]:
@@ -44,7 +44,8 @@ for event in events:
                 .replace("Z","+00:00")
             )
 
-            if end < now:
+            # NUR ZUKÜNFTIGE CUPS
+            if start <= now:
                 continue
 
             cups.append({
@@ -54,7 +55,7 @@ for event in events:
             })
 
         except:
-            pass
+            continue
 
 
 cups=sorted(
@@ -62,14 +63,14 @@ cups=sorted(
     key=lambda x:x["start"]
 )
 
+clean=[]
 seen=set()
-final=[]
 
 for cup in cups:
 
     key=(
         cup["name"],
-        cup["start"]
+        cup["start"].strftime("%Y%m%d%H")
     )
 
     if key in seen:
@@ -77,20 +78,20 @@ for cup in cups:
 
     seen.add(key)
 
-    final.append(cup)
+    clean.append(cup)
 
-    if len(final)>=6:
+    if len(clean)>=5:
         break
 
 
-msg="@everyone\n\n🏆 **Heute & Nächste EU Cups**\n\n"
+msg="@everyone\n\n🏆 **Nächste EU Cups**\n\n"
 
-for cup in final:
+for cup in clean:
 
     start=(
         cup["start"]
         .astimezone(berlin)
-        .strftime("%H:%M")
+        .strftime("%d.%m • %H:%M")
     )
 
     end=(
@@ -99,15 +100,9 @@ for cup in final:
         .strftime("%H:%M")
     )
 
-    tag=(
-        cup["start"]
-        .astimezone(berlin)
-        .strftime("%d.%m")
-    )
-
     msg+=(
         f"🎯 {cup['name']}\n"
-        f"🕒 {tag} • {start} - {end}\n\n"
+        f"🕒 {start} - {end} Uhr\n\n"
     )
 
 msg+="📍 Region: EU\n💙 EVA Esports"
@@ -115,8 +110,7 @@ msg+="📍 Region: EU\n💙 EVA Esports"
 requests.post(
 WEBHOOK,
 json={
-"content":msg
-}
+"content":msg}
 )
 
 print("Gesendet")
