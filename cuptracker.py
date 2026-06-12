@@ -13,19 +13,12 @@ r=requests.get(url,headers=headers)
 
 data=r.json()
 
-title=data["news"]["messages"][0]["title"]
-body=data["news"]["messages"][0]["body"]
-
 msg=f"""
-@everyone
+🏆 EVA Event Test
 
-📰 EVA Fortnite Update
+Status: {r.status_code}
 
-🏆 {title}
-
-{body}
-
-💙 Mehr in #cups
+{str(data)[:1200]}
 """
 
 requests.post(
