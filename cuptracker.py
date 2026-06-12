@@ -1,7 +1,14 @@
 import requests
 
-url = "https://www.fortnite.com/competitive/?region=EU"
+API_KEY = "14eb41dafca37dc846edbcf65aa3678fbee1268ec4aa8956f58c8de83b5b3c66"
 
-r = requests.get(url)
+url = "https://prod.api-fortnite.com/api/v1/events/tracker"
 
-print(r.text[:1000])
+headers = {
+    "Authorization": API_KEY
+}
+
+r = requests.get(url, headers=headers)
+
+print(r.status_code)
+print(r.text[:2000])
